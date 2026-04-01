@@ -1,0 +1,153 @@
+---
+title: "Taheri_Cameron_HW02"
+output: pdf_document
+date: "2026-01-21"
+---
+
+```{r setup, message=FALSE, echo=FALSE}
+#import packages
+library(tidyverse)
+```
+
+### Population Means for Each Distribution
+
+Normal Distribution $N(0,1)$ has mean = $\mu=0$ 
+
+Chi-Squared Distribution $\chi^2(k),\ k=3$ has mean = $k=3$ 
+
+Cauchy Distribution $C(0,1)$ does not have finite moments, but does have a median and mode, both equal to 0. 
+
+### Generating Means
+Generating sample means from increasingly large samples.
+
+#### Function for generating the sample mean for each of the above distributions
+```{r message=FALSE, echo=TRUE}
+# calculate sample mean for each distribution
+# input variable = i, parameter for distribution type
+sample_mean <- function(i, dist_type = "norm") {
+  n <- 2^i  # sample size
+  
+  # generate random samples from each distribution
+  if (dist_type == "norm") {
+    sample_data <- rnorm(
+      n, 
+      mean = 0, 
+      sd = 1
+      )
+  } else if (dist_type == "chisqr") {
+    sample_data <- rchisq(
+      n, 
+      df = 3
+      )
+  } else if (dist_type == "cauchy") {
+    sample_data <- rcauchy(
+      n, 
+      location = 0, 
+      scale = 1
+      )
+  }
+  
+  return(mean(sample_data))
+}
+```
+
+
+#### Testing the sample mean function 
+```{r message=FALSE, echo=FALSE}
+N <- 20
+dist_types <- c("norm", "chisqr", "cauchy")
+
+# outer loop goes through each distribution
+for (d in dist_types) {
+  
+  # inner loop generates mean using the sample_mean() function
+  Ti <- numeric(N) 
+  for (i in 1:N) {
+    Ti[i] <- sample_mean(i, dist_type = d)
+  }
+  
+  # create a temporary data frame for each distribution
+  plot_df <- data.frame(
+    i = 1:N,
+    mean_val = Ti
+  )
+  
+  # generate a plot and print
+  p <- ggplot(
+    data = plot_df, 
+    aes(
+      x = i, 
+      y = mean_val
+      )
+    ) +
+    
+    geom_line(color = "steelblue") +
+    geom_point(alpha = 0.5, color = "darkorange") +
+    theme_minimal() +
+    
+    labs(
+      title = paste("Sample Mean of:", d),
+      x = "i (Sample Size = 2^i)",
+      y = "Sample Mean (Ti)"
+    )
+  
+  print(p)
+}
+```
+
+We can see that for both the Normal and Chi-Squared distributions, the sample mean exists and converges to the population means of 0 and 3, respectively. However, for the Cauchy distribution, the sample mean is generated but it never converges. This is expected given the Cauchy does not have a finite first moment. 
+
+
+### Simulations
+Rerun the same distribution test 100 times for analyzing its behavior.
+
+```{r message=FALSE, echo=FALSE}
+N <- 20
+S <- 100
+dist_types <- c("norm", "chisqr", "cauchy")
+
+for (d in dist_types) {
+  
+  # create empty plot for the lines
+  # they're going to vary in size 
+  #   given the characteristics of their distributions
+  y_lims <- if(d == "cauchy") c(-50, 50) else if(d == "chisqr") c(0, 6) else c(-2, 2)
+  
+  plot(NULL, 
+       xlim = c(1, N), 
+       ylim = y_lims,
+       xlab = "i (Sample Size = 2^i)", 
+       ylab = "Sample Mean (Ti)",
+       main = paste("100 Simulation Paths:", d))
+  
+  # outer loop will repeat nested loops 100 times
+  for (s in 1:S) {
+    
+    # first inner loop grabs the sample mean for each distribution
+    Ti_values <- numeric(N)
+    for (i in 1:N) {
+      Ti_values[i] <- sample_mean(i, dist_type = d)
+    }
+    
+    # add the line to the empty plot
+    lines(
+      1:N, 
+      Ti_values, 
+      col = rgb(0, 0, 1, 0.2), 
+      lwd = 0.5
+      )
+  }
+  
+}
+
+```
+
+We can see how this demonstrates the law of large numbers, whereby the sample mean will converge to the population mean should a population mean exist and be finite. In the case of the Cauchy distribution, the 100 simulations led to a cluster around zero (its median and mode) but with many observations far from zero. For the Normal and Chi-Squared, however, as the sample size increases (exponentially), the distribution converges around its population mean because each of them have a mean that exists and is finite.
+
+One thing to note: I will be returning to this to find a better way to execute 100 simulations for each distribution (e.g., vectorizing).
+
+
+
+
+
+
