@@ -1,5 +1,5 @@
 ---
-title: "Taheri_Cameron_HW02"
+title: "Behavior of Distributions as Sample Size Increases"
 output: pdf_document
 date: "2026-01-21"
 ---
